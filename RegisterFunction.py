@@ -1,4 +1,4 @@
-def register_file(A1, A2, A3, WD, RegWrite, registers_state):
+def register_file(A1, A2, A3, WD, RegWrite,registers_state):
     """
     Simulates the MIPS Register File block.
     
