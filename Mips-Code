@@ -1,69 +1,53 @@
-.data
-    arr:            .word 2, 3, 4, 10, 40       # Sorted array
-    size:           .word 5                     # Array ki length
-    target:         .word 10                    # Jo dhundhna hai
-    
-    msg_found:      .asciiz "\nFound at index: "
-    msg_not_found:  .asciiz "\nNot found!"
+# Assume array starts at memory address 0 in your simulator
+# Array = [2, 3, 4, 10, 40]
+# Target = 10
 
-.text
-.globl main
+# --- INITIALIZATION ---
+add  $s0, $zero, $zero    # $s0 = 0 (Base address of array in memory)
+add  $s1, $zero, $zero    # $s1 = 0 (low = 0)
+addi $s2, $zero, 4        # $s2 = 4 (high = 4, since size is 5)
+addi $s3, $zero, 10       # $s3 = 10 (Target value we are searching for)
+addi $s7, $zero, -1       # $s7 = -1 (Default result index if not found)
 
-main:
-    # 1. Sab kuch seedha temporary registers ($t) mein load kar lo
-    la $t0, arr          # $t0 = Array ka Base Address
-    li $t1, 0            # $t1 = low = 0
-    lw $t2, size         
-    addi $t2, $t2, -1    # $t2 = high = size - 1 (subi hata diya real mips feel ke liye)
-    lw $t3, target       # $t3 = target (10)
+# --- MAIN LOOP ---
+loop:
+    # 1. Check while (low <= high) -> break if (high < low)
+    slt  $t0, $s2, $s1        # $t0 = 1 IF high < low
+    bne  $t0, $zero, end_prog # IF high < low, exit the loop
 
-search_loop:
-    # 2. Condition: Agar low > high ho gaya, toh loop break kar do
-    bgt $t1, $t2, print_not_found
+    # 2. Calculate mid = (low + high) / 2
+    add  $s4, $s1, $s2        # $s4 = low + high
+    srl  $s4, $s4, 1          # $s4 = mid (Shift Right Logical divides by 2)
 
-    # 3. mid nikalna: mid = (low + high) / 2
-    add $t4, $t1, $t2    # $t4 = low + high
-    sra $t4, $t4, 1      # $t4 = mid (Divide by 2)
+    # 3. Load arr[mid] from memory
+    sll  $t1, $s4, 2          # $t1 = mid * 4 (Offset in bytes)
+    add  $s5, $s0, $t1        # $s5 = Base Address + Offset
+    lw   $s6, 0($s5)          # $s6 = arr[mid] (Load value from memory)
 
-    # 4. arr[mid] ki value memory se lana
-    sll $t5, $t4, 2      # $t5 = mid * 4 (4 bytes per word)
-    add $t5, $t0, $t5    # $t5 = Base Address + Offset
-    lw  $t6, 0($t5)      # $t6 = arr[mid]
+    # 4. Check if arr[mid] == target
+    beq  $s6, $s3, found_it   # IF arr[mid] == target, jump to found_it
 
-    # 5. Check karo match hua kya?
-    beq $t6, $t3, print_found
-
-    # 6. Agar arr[mid] < target hai, toh right side jao
-    blt $t6, $t3, go_right
-
-go_left:
-    # high = mid - 1
-    addi $t2, $t4, -1
-    j search_loop
+    # 5. Check if arr[mid] < target
+    slt  $t0, $s6, $s3        # $t0 = 1 IF arr[mid] < target
+    beq  $t0, $zero, go_left  # IF NOT less than (so it's >), go left
 
 go_right:
     # low = mid + 1
-    addi $t1, $t4, 1
-    j search_loop
+    addi $s1, $s4, 1          
+    beq  $zero, $zero, loop   # Unconditional Jump back to loop!
 
-# ==========================================
-# PRINT & EXIT LOGIC
-# ==========================================
-print_found:
-    li $v0, 4
-    la $a0, msg_found
-    syscall
-    
-    li $v0, 1
-    move $a0, $t4        # Index ($t4) print karo
-    syscall
-    j exit
+go_left:
+    # high = mid - 1
+    addi $s2, $s4, -1         
+    beq  $zero, $zero, loop   # Unconditional Jump back to loop!
 
-print_not_found:
-    li $v0, 4
-    la $a0, msg_not_found
-    syscall
+# --- RESULT HANDLERS ---
+found_it:
+    # Save the found index to $s7
+    add  $s7, $zero, $s4      
+    beq  $zero, $zero, end_prog # Jump to end
 
-exit:
-    li $v0, 10           # Program khatam
-    syscall
+end_prog:
+    # Infinite loop to halt the simulator gracefully
+    # Result is sitting safely in register $s7
+    beq  $zero, $zero, end_prog
