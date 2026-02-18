@@ -16,4 +16,3 @@ def write_data_memory(address, write_data, file_name="Data.txt"):
         for line in lines:
             f.write(line + "\n")
             
-    print(f"Successfully wrote data to Address {line_number}")
