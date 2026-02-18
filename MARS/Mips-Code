@@ -1,0 +1,21 @@
+.data
+    num1: .word 10          # Store 10 in memory
+    num2: .word 20          # Store 20 in memory
+
+.text
+main:
+    # 1. Load the values from memory into registers
+    lw $t1, num1            # $t1 = memory[num1]
+    lw $t2, num2            # $t2 = memory[num2]
+
+    # 2. Do your math
+    add $t3, $t1, $t2       # $t3 = 10 + 20
+
+    # 3. (Optional) Print the result
+    li $v0, 1               # System call for print_int
+    move $a0, $t3           # Put result in $a0
+    syscall
+
+    # Exit
+    li $v0, 10
+    syscall
