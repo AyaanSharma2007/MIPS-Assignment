@@ -1,100 +1,69 @@
 .data
-    # Humara array aur variables yahan define honge
     arr:            .word 2, 3, 4, 10, 40       # Sorted array
     size:           .word 5                     # Array ki length
-    target:         .word 10                    # Jo number hum dhundh rahe hain
+    target:         .word 10                    # Jo dhundhna hai
     
-    msg_found:      .asciiz "\nElement found at index: "
-    msg_not_found:  .asciiz "\nElement not found in the array!"
+    msg_found:      .asciiz "\nFound at index: "
+    msg_not_found:  .asciiz "\nNot found!"
 
 .text
 .globl main
 
-# ==========================================
-# MAIN FUNCTION
-# ==========================================
 main:
-    # Function Arguments load kar rahe hain:
-    la $a0, arr          # $a0 = Array ka base address
-    li $a1, 0            # $a1 = low = 0
-    
-    lw $t0, size         # size load kiya
-    subi $a2, $t0, 1     # $a2 = high = size - 1
-    
-    lw $a3, target       # $a3 = target (jisko dhundhna hai)
+    # 1. Sab kuch seedha temporary registers ($t) mein load kar lo
+    la $t0, arr          # $t0 = Array ka Base Address
+    li $t1, 0            # $t1 = low = 0
+    lw $t2, size         
+    addi $t2, $t2, -1    # $t2 = high = size - 1 (subi hata diya real mips feel ke liye)
+    lw $t3, target       # $t3 = target (10)
 
-    # Function call
-    jal binary_search
-    
-    # Result $v0 se $s0 mein save kar liya
-    move $s0, $v0
+search_loop:
+    # 2. Condition: Agar low > high ho gaya, toh loop break kar do
+    bgt $t1, $t2, print_not_found
 
-    # Check agar result == -1 (matlab nahi mila)
-    li $t0, -1
-    beq $s0, $t0, print_not_found
+    # 3. mid nikalna: mid = (low + high) / 2
+    add $t4, $t1, $t2    # $t4 = low + high
+    sra $t4, $t4, 1      # $t4 = mid (Divide by 2)
 
+    # 4. arr[mid] ki value memory se lana
+    sll $t5, $t4, 2      # $t5 = mid * 4 (4 bytes per word)
+    add $t5, $t0, $t5    # $t5 = Base Address + Offset
+    lw  $t6, 0($t5)      # $t6 = arr[mid]
+
+    # 5. Check karo match hua kya?
+    beq $t6, $t3, print_found
+
+    # 6. Agar arr[mid] < target hai, toh right side jao
+    blt $t6, $t3, go_right
+
+go_left:
+    # high = mid - 1
+    addi $t2, $t4, -1
+    j search_loop
+
+go_right:
+    # low = mid + 1
+    addi $t1, $t4, 1
+    j search_loop
+
+# ==========================================
+# PRINT & EXIT LOGIC
+# ==========================================
 print_found:
-    # Success message print karo
     li $v0, 4
     la $a0, msg_found
     syscall
     
-    # Index (result) print karo
     li $v0, 1
-    move $a0, $s0
+    move $a0, $t4        # Index ($t4) print karo
     syscall
     j exit
 
 print_not_found:
-    # Fail message print karo
     li $v0, 4
     la $a0, msg_not_found
     syscall
 
 exit:
-    # Program end karne ka syscall
-    li $v0, 10
+    li $v0, 10           # Program khatam
     syscall
-
-# ==========================================
-# BINARY SEARCH PROCEDURE
-# Arguments: $a0 = arr base, $a1 = low, $a2 = high, $a3 = target
-# Returns:   $v0 = index (if found), ya fir -1 (if not found)
-# ==========================================
-binary_search:
-loop:
-    # condition: while (low <= high) -> agar low > high toh loop break
-    bgt $a1, $a2, not_in_array
-
-    # mid = (low + high) / 2
-    add $t0, $a1, $a2    # $t0 = low + high
-    sra $t0, $t0, 1      # $t0 = $t0 / 2 (Shift Right Arithmetic se divide by 2)
-
-    # arr[mid] ki value memory se nikalna (Pointer arithmetic)
-    sll $t1, $t0, 2      # $t1 = mid * 4 (kyunki MIPS mein 1 word = 4 bytes)
-    add $t1, $a0, $t1    # $t1 = base_address + (mid * 4) -> address of arr[mid]
-    lw $t2, 0($t1)       # $t2 = arr[mid] (value load ho gayi)
-
-    # Check 1: if (arr[mid] == target)
-    beq $t2, $a3, found_it
-
-    # Check 2: if (arr[mid] < target)
-    blt $t2, $a3, go_right
-
-go_left:
-    # else ki condition: high = mid - 1
-    subi $a2, $t0, 1
-    j loop
-
-go_right:
-    # low = mid + 1
-    addi $a1, $t0, 1
-    j loop
-
-found_it:
-    move $v0, $t0        # index ($t0) ko return register ($v0) mein daalo
-    jr $ra               # Return to caller (main)
-
-not_in_array:
-    li $v0, -1           # -1 daalo return register mein
-    jr $ra               # Return to caller
