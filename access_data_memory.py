@@ -7,6 +7,3 @@ def access_data_memory(address_32bit, file_name="Data.txt"):
         return fetched_data
     else:
         return "00000000000000000000000000000000"
-    
-    
-    
