@@ -4,11 +4,13 @@ import os
 # Tere banaye gaye SAARE files yahan import ho rahe hain
 from memory_builder import make_byte_addressable
 from fetch import fetch
-from Decode import decode_instruction
-from RegisterFunction import register_file
+from Decode import decode_instruction, REGISTER_NAMES
 from execute import execute_stage
 from access_data_memory import access_data_memory
 from writeData import write_data_memory
+
+# Helper to convert register names like "$t0" to their index (e.g., 8)
+REGISTER_MAP = {name: i for i, name in enumerate(REGISTER_NAMES)}
 
 def load_registers(filename="Register.txt"):
     """Register.txt se 32-bit strings padh kar integer list banata hai."""
@@ -18,7 +20,11 @@ def load_registers(filename="Register.txt"):
             lines = f.readlines()
             for i in range(min(32, len(lines))):
                 try:
-                    registers[i] = int(lines[i].strip(), 2)
+                    line = lines[i].strip()
+                    if len(line) == 32:
+                        registers[i] = int(line, 2)
+                    else:
+                        registers[i] = 0
                 except ValueError:
                     registers[i] = 0
     return registers
@@ -59,13 +65,14 @@ def run_mips_processor():
             break
             
         # --- STAGE 2: DECODE & REGISTER READ ---
-        decoded_info = decode_instruction(instr_str)
+        decoded_info = decode_instruction(int(instr_str, 2))
         
-        rs_idx = decoded_info.get("rs", 0)
-        rt_idx = decoded_info.get("rt", 0)
+        rs_idx = REGISTER_MAP.get(decoded_info.get("rs"), 0)
+        rt_idx = REGISTER_MAP.get(decoded_info.get("rt"), 0)
         
-        # Tere RegisterFunction ko call kiya
-        rd1_int, rd2_int = register_file(rs_idx, rt_idx, 0, 0, 0, registers_state)
+        # Read from our in-memory register state
+        rd1_int = registers_state[rs_idx]
+        rd2_int = registers_state[rt_idx]
         
         # Execute module ke ALU ke liye binary string me badla
         rs_bin = f"{rd1_int & 0xFFFFFFFF:032b}"
@@ -88,21 +95,25 @@ def run_mips_processor():
             
         # --- STAGE 5: WRITE BACK ---
         if ex_result["reg_write"]:
-            write_reg_idx = ex_result["write_dest_reg"]
+            write_dest = ex_result["write_dest_reg"]
+            write_reg_idx = -1 # Default to invalid
             
-            # $zero (0) me nahi likhte
-            if write_reg_idx != 0 and write_reg_idx is not None:
+            # Handle JAL where dest is an int (31), and others where it's a string name
+            if isinstance(write_dest, int):
+                write_reg_idx = write_dest
+            elif isinstance(write_dest, str):
+                write_reg_idx = REGISTER_MAP.get(write_dest, -1)
+
+            # Write to register if it's a valid, non-zero register
+            if write_reg_idx > 0:
                 if ex_result["mem_to_reg"]:
                     wb_data_int = int(mem_read_data_bin, 2)
                 else:
                     wb_data_int = int(ex_result["alu_result_bin"], 2)
                     
-                # Register me likh diya (RegWrite = 1)
-                register_file(0, 0, write_reg_idx, wb_data_int, 1, registers_state)
-                
-        # HAR CYCLE KE BAAD REGISTER.TXT UPDATE KARO
-        save_registers(registers_state, "Register.txt")
-                
+                # Update our in-memory register state
+                registers_state[write_reg_idx] = wb_data_int
+
         # --- UPDATE PC ---
         if ex_result["update_pc"]:
             pc_int = ex_result["new_pc_int"]
@@ -113,6 +124,8 @@ def run_mips_processor():
         time.sleep(0.1) # Terminal mein step-by-step dekhne ke liye delay
 
     print("="*50)
+    # Save the final state of registers to the file ONCE at the end.
+    save_registers(registers_state, "Register.txt")
     print("✅ Execution Complete! Saara final data 'Register.txt' aur 'Data.txt' mein save ho gaya hai.")
 
 if __name__ == "__main__":

@@ -66,12 +66,21 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
     # J - Jump (Opcode: 0x02)
     elif opcode == 0x02:
         ex_result["update_pc"] = True
-        ex_result["new_pc_int"] = int(decoded_info["address"], 16) * 4
+        # Correct J-type address calculation: (PC+4)[31:28] | (addr << 2)
+        jump_target_addr = int(decoded_info["address"], 16)
+        upper_pc_bits = pc_plus_4_int & 0xF0000000
+        lower_jump_bits = jump_target_addr * 4
+        ex_result["new_pc_int"] = upper_pc_bits | lower_jump_bits
 
     # JAL - Jump And Link (Opcode: 0x03)
     elif opcode == 0x03:
         ex_result["update_pc"] = True
-        ex_result["new_pc_int"] = int(decoded_info["address"], 16) * 4
+        # Correct J-type address calculation: (PC+4)[31:28] | (addr << 2)
+        jump_target_addr = int(decoded_info["address"], 16)
+        upper_pc_bits = pc_plus_4_int & 0xF0000000
+        lower_jump_bits = jump_target_addr * 4
+        ex_result["new_pc_int"] = upper_pc_bits | lower_jump_bits
+
         ex_result["write_dest_reg"] = 31 # Save return address in $ra (Register 31)
         ex_result["reg_write"] = True
         ex_result["alu_result_bin"] = f"{pc_plus_4_int:032b}" # Save PC+4 to $ra
@@ -100,13 +109,28 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
 
         # BEQ - Branch on Equal (Opcode: 0x04)
         elif opcode == 0x04:
+            # Special check for a common halt loop: beq $rs, $rs, -1
+            # This instruction branches to itself, creating an infinite loop.
+            if imm == -1 and rs_val_bin == rt_val_bin:
+                print("INFO: Detected halt loop (beq $rs, $rs, -1). Halting.")
+                ex_result["update_pc"] = True
+                ex_result["new_pc_int"] = -4 # Set PC to an invalid address to stop fetch
+                return ex_result
+
             alu_res = ALU(rs_val_bin, rt_val_bin, "011") # Subtract Rs and Rt
             if int(alu_res, 2) == 0:                     # If Result == 0, they are equal
                 ex_result["update_pc"] = True
                 ex_result["new_pc_int"] = pc_plus_4_int + (imm * 4)
 
-        # BNE - Branch Not Equal (Opcode: 0x05) -> Used internally by bgt/blt
+        # BNE - Branch Not Equal (Opcode: 0x05)
         elif opcode == 0x05:
+            # Special check for a common halt loop: bne $rs, $rt, -1 where rs != rt
+            if imm == -1 and rs_val_bin != rt_val_bin:
+                print("INFO: Detected halt loop (bne $rs, $rt, -1). Halting.")
+                ex_result["update_pc"] = True
+                ex_result["new_pc_int"] = -4 # Set PC to an invalid address to stop fetch
+                return ex_result
+
             alu_res = ALU(rs_val_bin, rt_val_bin, "011") # Subtract
             if int(alu_res, 2) != 0:                     # If Result != 0, they are NOT equal
                 ex_result["update_pc"] = True

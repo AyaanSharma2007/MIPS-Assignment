@@ -24,9 +24,9 @@ def decode_instruction(instruction):
         rt_num = (instruction >> 16) & 0x1F
         rd_num = (instruction >> 11) & 0x1F
         
-        decoded["rs"] = REGISTER_NAMES[rs_num]
-        decoded["rt"] = REGISTER_NAMES[rt_num]
-        decoded["rd"] = REGISTER_NAMES[rd_num]
+        decoded["rs"] = rs_num
+        decoded["rt"] = rt_num
+        decoded["rd"] = rd_num
         
         decoded["shamt"] = (instruction >> 6) & 0x1F
         decoded["funct"] = hex(instruction & 0x3F)
@@ -44,8 +44,8 @@ def decode_instruction(instruction):
         rs_num = (instruction >> 21) & 0x1F
         rt_num = (instruction >> 16) & 0x1F
         
-        decoded["rs"] = REGISTER_NAMES[rs_num]
-        decoded["rt"] = REGISTER_NAMES[rt_num]
+        decoded["rs"] = rs_num
+        decoded["rt"] = rt_num
         
         # Handle signed immediate
         imm = instruction & 0xFFFF

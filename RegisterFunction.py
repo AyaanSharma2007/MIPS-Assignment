@@ -13,7 +13,7 @@ def register_file(A1, A2, A3, WD, RegWrite):
     Returns:
     RD1, RD2: The data read from registers A1 and A2
     """
-    filename = "registers.txt"
+    filename = "Register.txt"
     
     # --- 1. READ PHASE: Load registers from the file ---
     # We read all 32 lines and convert them into a list of integers
