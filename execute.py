@@ -12,6 +12,7 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
     # Default Control Signals (Sab Off)
     ex_result = {
         "alu_result_bin": "00000000000000000000000000000000",
+        "store_data_bin": "00000000000000000000000000000000", # Added for SW safety
         "write_dest_reg": None, 
         "reg_write": False,     
         "mem_read": False,      
@@ -31,12 +32,22 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
         # ADD / MOVE (funct: 0x20)
         if funct == 0x20:
             ex_result["alu_result_bin"] = ALU(rs_val_bin, rt_val_bin, "010")
+
+        # SUB - Subtract (funct: 0x22) -> ADDED THIS FOR YOU
+        elif funct == 0x22:
+            ex_result["alu_result_bin"] = ALU(rs_val_bin, rt_val_bin, "011") 
             
         # SLL - Shift Left Logical (funct: 0x00)
         elif funct == 0x00:
             rt_int = int(rt_val_bin, 2)
             shamt = decoded_info["shamt"]
             res = (rt_int << shamt) & 0xFFFFFFFF
+            ex_result["alu_result_bin"] = f"{res:032b}"
+        # SRL - Shift Right Logical (funct: 0x02)
+        elif funct == 0x02:
+            rt_int = int(rt_val_bin, 2)
+            shamt = decoded_info["shamt"]
+            res = (rt_int & 0xFFFFFFFF) >> shamt
             ex_result["alu_result_bin"] = f"{res:032b}"
             
         # SRA - Shift Right Arithmetic (funct: 0x03)
@@ -66,7 +77,6 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
     # J - Jump (Opcode: 0x02)
     elif opcode == 0x02:
         ex_result["update_pc"] = True
-        # Correct J-type address calculation: (PC+4)[31:28] | (addr << 2)
         jump_target_addr = int(decoded_info["address"], 16)
         upper_pc_bits = pc_plus_4_int & 0xF0000000
         lower_jump_bits = jump_target_addr * 4
@@ -75,7 +85,6 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
     # JAL - Jump And Link (Opcode: 0x03)
     elif opcode == 0x03:
         ex_result["update_pc"] = True
-        # Correct J-type address calculation: (PC+4)[31:28] | (addr << 2)
         jump_target_addr = int(decoded_info["address"], 16)
         upper_pc_bits = pc_plus_4_int & 0xF0000000
         lower_jump_bits = jump_target_addr * 4
@@ -107,14 +116,19 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
             ex_result["mem_read"] = True
             ex_result["mem_to_reg"] = True
 
+        # SW - Store Word (Opcode: 0x2B) -> ADDED THIS FOR YOU
+        elif opcode == 0x2B:
+            ex_result["alu_result_bin"] = ALU(rs_val_bin, extended_imm_bin, "010") # Calculate memory address
+            ex_result["store_data_bin"] = rt_val_bin # The data we want to write into memory
+            ex_result["reg_write"] = False # We write to memory, NOT a register
+            ex_result["mem_write"] = True
+
         # BEQ - Branch on Equal (Opcode: 0x04)
         elif opcode == 0x04:
-            # Special check for a common halt loop: beq $rs, $rs, -1
-            # This instruction branches to itself, creating an infinite loop.
             if imm == -1 and rs_val_bin == rt_val_bin:
                 print("INFO: Detected halt loop (beq $rs, $rs, -1). Halting.")
                 ex_result["update_pc"] = True
-                ex_result["new_pc_int"] = -4 # Set PC to an invalid address to stop fetch
+                ex_result["new_pc_int"] = -4 
                 return ex_result
 
             alu_res = ALU(rs_val_bin, rt_val_bin, "011") # Subtract Rs and Rt
@@ -124,11 +138,10 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
 
         # BNE - Branch Not Equal (Opcode: 0x05)
         elif opcode == 0x05:
-            # Special check for a common halt loop: bne $rs, $rt, -1 where rs != rt
             if imm == -1 and rs_val_bin != rt_val_bin:
                 print("INFO: Detected halt loop (bne $rs, $rt, -1). Halting.")
                 ex_result["update_pc"] = True
-                ex_result["new_pc_int"] = -4 # Set PC to an invalid address to stop fetch
+                ex_result["new_pc_int"] = -4 
                 return ex_result
 
             alu_res = ALU(rs_val_bin, rt_val_bin, "011") # Subtract
@@ -136,14 +149,14 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
                 ex_result["update_pc"] = True
                 ex_result["new_pc_int"] = pc_plus_4_int + (imm * 4)
                 
-        # LUI - Load Upper Immediate (Opcode: 0x0F) -> Used by 'la'
+        # LUI - Load Upper Immediate (Opcode: 0x0F)
         elif opcode == 0x0F:
             res = (imm << 16) & 0xFFFFFFFF
             ex_result["alu_result_bin"] = f"{res:032b}"
             ex_result["write_dest_reg"] = decoded_info["rt"]
             ex_result["reg_write"] = True
 
-        # ORI - OR Immediate (Opcode: 0x0D) -> Used by 'la'
+        # ORI - OR Immediate (Opcode: 0x0D)
         elif opcode == 0x0D:
             rs_int = int(rs_val_bin, 2)
             res = (rs_int | (imm & 0xFFFF)) & 0xFFFFFFFF
