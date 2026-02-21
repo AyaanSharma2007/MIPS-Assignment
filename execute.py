@@ -70,6 +70,17 @@ def execute_stage(decoded_info, rs_val_bin, rt_val_bin, pc_plus_4_int):
             ex_result["update_pc"] = True
             ex_result["new_pc_int"] = int(rs_val_bin, 2)
             ex_result["reg_write"] = False # JR doesn't write to register
+        # JR - Jump Register (funct: 0x08)
+        elif funct == 0x08:
+            ex_result["update_pc"] = True
+            ex_result["new_pc_int"] = int(rs_val_bin, 2)
+            ex_result["reg_write"] = False # JR doesn't write to register
+            
+        # SYSCALL (funct: 0x0C)
+        elif funct == 0x0C:
+            # We don't do anything in the EX stage for syscall since 
+            # processor.py intercepts it, but we MUST ensure it doesn't write!
+            ex_result["reg_write"] = False
 
     # ==========================================
     # 2. J-TYPE INSTRUCTIONS

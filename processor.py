@@ -55,12 +55,28 @@ def run_mips_processor():
             
         decoded_info = decode_instruction(int(instr_str, 2))
         
+        # ==========================================
+        # NEW: SYSCALL INTERCEPTOR
+        # ==========================================
+        # Check if Opcode is 0x00 and Funct is 0x0c (syscall)
+        if decoded_info.get("opcode") == "0x0" and decoded_info.get("funct") == "0xc":
+            v0_val = registers_state[2] # $v0 is Register 2
+            
+            if v0_val == 10:
+                print(f"Syscall 10 (Exit) detected at PC {pc_int}. Processor Halting.")
+                break
+            else:
+                print(f"Warning: Syscall {v0_val} not implemented. Ignoring.")
+                pc_int += 4
+                cycle_count += 1
+                continue # Skip the execution stage and go to the next instruction
+        # ==========================================
+
         rs_idx = decoded_info.get("rs", 0)
         rt_idx = decoded_info.get("rt", 0)
         
         rd1_int = registers_state[rs_idx]
         rd2_int = registers_state[rt_idx]
-        
         rs_bin = f"{rd1_int & 0xFFFFFFFF:032b}"
         rt_bin = f"{rd2_int & 0xFFFFFFFF:032b}"
         
@@ -97,7 +113,7 @@ def run_mips_processor():
             pc_int = pc_plus_4
             
         cycle_count += 1
-        time.sleep(0.1)
+        time.sleep(0.01)
 
     print("="*50)
     save_registers(registers_state, "Register.txt")
