@@ -118,7 +118,7 @@ def run_mips_processor():
 
     print("="*50)
     save_registers(registers_state, "Register.txt")
-    print("Execution Complete! Final data saved to 'Register.txt' and 'Data.txt'.")
+    print("Execution Complete! Final data saved to 'Register.txt' and 'memory_data.txt'.")
 
 if __name__ == "__main__":
     if not os.path.exists("Register.txt"):
