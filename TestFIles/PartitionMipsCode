@@ -1,0 +1,63 @@
+.data
+    arr0: .word 40
+    arr1: .word 10
+    arr2: .word 50
+    arr3: .word 20
+    arr4: .word 30
+
+.text
+.globl main
+main:
+    addi $a0, $0, 0         # Base address = 0
+    add $a1, $0, $0         # low = 0
+    addi $a2, $0, 4         # high = 4
+    
+    # FIXED: Replaced 'jal partition' with a relative branch
+    beq $0, $0, partition   
+
+return_main:
+    # Halt Simulator
+    addi $v0, $0, 10
+    syscall
+
+partition:
+    sll $t0, $a2, 2
+    add $t0, $t0, $a0
+    lw $t3, 0($t0)          # Load Pivot
+    addi $t1, $a1, -1
+    add $t2, $a1, $0
+
+part_loop:
+    slt $t9, $t2, $a2
+    beq $t9, $0, part_end
+    sll $t4, $t2, 2
+    add $t4, $t4, $a0
+    lw $t5, 0($t4)
+    slt $t9, $t5, $t3
+    beq $t9, $0, part_noswap
+    addi $t1, $t1, 1
+    sll $t6, $t1, 2
+    add $t6, $t6, $a0
+    lw $t7, 0($t6)
+    sw $t5, 0($t6)
+    sw $t7, 0($t4)
+
+part_noswap:
+    addi $t2, $t2, 1
+    beq $0, $0, part_loop
+
+part_end:
+    addi $t1, $t1, 1
+    sll $t6, $t1, 2
+    add $t6, $t6, $a0
+    lw $t7, 0($t6)
+    sll $t0, $a2, 2
+    add $t0, $t0, $a0
+    lw $t8, 0($t0)
+    sw $t8, 0($t6)
+    sw $t7, 0($t0)
+    
+    add $v0, $t1, $0        # Store final pivot index in $v0
+    
+    # FIXED: Replaced 'jr $ra' with a relative branch back to main
+    beq $0, $0, return_main
