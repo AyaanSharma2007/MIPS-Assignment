@@ -113,7 +113,8 @@ def run_mips_processor():
             pc_int = pc_plus_4
             
         cycle_count += 1
-        time.sleep(0.01)
+        save_registers(registers_state, "Register.txt")
+        input("Press Enter to execute the next cycle...")
 
     print("="*50)
     save_registers(registers_state, "Register.txt")
