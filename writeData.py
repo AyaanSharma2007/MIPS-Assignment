@@ -1,19 +1,19 @@
 def write_data_memory(address, write_data, file_name="Data.txt"):
-    # FIX: Divide by 4 to convert MIPS byte address to Python line number.
-    # This aligns the write operation with how access_data_memory.py reads it.
-    line_number = int(address, 2) // 4
-    
+    byte_address = int(address, 2)
+
     with open(file_name, 'r') as f:
         lines = [line.strip() for line in f.readlines()]
 
-    # EXTEND: Dynamically grow the memory if we write to a new, higher address
-    while len(lines) <= line_number:
-        lines.append("00000000000000000000000000000000") # Fill gaps with 0s
+    # Ensure memory large enough
+    while len(lines) <= byte_address + 3:
+        lines.append("00000000")
 
-    # WRITE: Update the specific line with our new 32-bit string
-    lines[line_number] = write_data
-    
-    # SAVE: Write everything back to the file
+    # Split 32-bit word into 4 bytes
+    lines[byte_address]     = write_data[0:8]
+    lines[byte_address + 1] = write_data[8:16]
+    lines[byte_address + 2] = write_data[16:24]
+    lines[byte_address + 3] = write_data[24:32]
+
     with open(file_name, 'w') as f:
         for line in lines:
             f.write(line + "\n")

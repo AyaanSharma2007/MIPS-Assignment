@@ -1,7 +1,7 @@
 import time
 import os
 
-from memory_builder import make_byte_addressable
+# from memory_builder import make_byte_addressable
 from fetch import fetch
 from Decode import decode_instruction, REGISTER_NAMES
 from execute import execute_stage
@@ -31,11 +31,16 @@ def save_registers(registers, filename="Register.txt"):
 
 def run_mips_processor():
     print("Starting MIPS Processor Simulation...\n" + "="*50)
-    
-    make_byte_addressable("Instructions.txt", "memory_code.txt")
+    # Reset Register File
+    with open("Register.txt", "w") as f:
+        for _ in range(32):
+            f.write("00000000000000000000000000000000\n")
+    from memory_builder import build_all_memories
+    build_all_memories()
     
     pc_int = 0
-    registers_state = load_registers("Register.txt") 
+    # registers_state = load_registers("Register.txt") 
+    registers_state = [0] * 32
     
     cycle_count = 1
 
@@ -69,11 +74,11 @@ def run_mips_processor():
         mem_read_data_bin = "00000000000000000000000000000000"
         
         if ex_result.get("mem_read"):
-            mem_read_data_bin = access_data_memory(ex_result["alu_result_bin"], "Data.txt")
+            mem_read_data_bin = access_data_memory(ex_result["alu_result_bin"], "memory_data.txt")
             
         if ex_result.get("mem_write"):
             store_data = ex_result.get("store_data_bin", "00000000000000000000000000000000")
-            write_data_memory(ex_result["alu_result_bin"], store_data, "Data.txt")
+            write_data_memory(ex_result["alu_result_bin"], store_data, "memory_data.txt")
             
         if ex_result.get("reg_write"):
             write_reg_idx = ex_result.get("write_dest_reg")
