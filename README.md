@@ -1,4 +1,4 @@
-# 💻 MIPS Single-Cycle Processor Simulator
+#  MIPS Single-Cycle Processor Simulator
 
 **A cycle-accurate, software-based MIPS datapath simulator.**
 
@@ -11,7 +11,7 @@ This project simulates the core functionality of a MIPS processor. Designed to m
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 Here is exactly how the files are organized within the simulator:
 
@@ -78,7 +78,7 @@ IO --> MD([memory_data.txt]):::ioChild
 
 ---
 
-## 🏗️ System Architecture & Datapath
+##  System Architecture & Datapath
 
 The simulator is built with a highly modular design. The following flowchart maps out the data flow from memory initialization through the processor's main execution loop.
 
@@ -146,7 +146,7 @@ MemAccess --> ReadWrite --> DATA
 WriteBack --> REG
 ```
 
-## 🚀 Supported Algorithmic Workloads
+##  Supported Algorithmic Workloads
 As part of this project, we implemented three core algorithmic programs in MIPS assembly language:
 
 ### Binary Search:
@@ -158,7 +158,7 @@ Analyzes a sequence of integers to compute both the arithmetic mean and the stat
 ### Partition Function:
 Implements a standard array partitioning algorithm, a core component of QuickSort. It selects a pivot element and rearranges the given sequence so that all values smaller than the pivot precede it, returning the pivot's correct sorted index.
 
-## 🛠️ How to Run the Simulator
+##  How to Run the Simulator
 ### Memory Initialization State
 
 Before the cycles begin, the simulator automatically handles the memory translation from 32-bit MARS output to 8-bit byte-addressable RAM.
