@@ -4,11 +4,9 @@ def write_data_memory(address, write_data, file_name="Data.txt"):
     with open(file_name, 'r') as f:
         lines = [line.strip() for line in f.readlines()]
 
-    # Ensure memory large enough
     while len(lines) <= byte_address + 3:
         lines.append("00000000")
 
-    # Split 32-bit word into 4 bytes
     lines[byte_address]     = write_data[0:8]
     lines[byte_address + 1] = write_data[8:16]
     lines[byte_address + 2] = write_data[16:24]

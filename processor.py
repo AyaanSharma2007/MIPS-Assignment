@@ -1,7 +1,6 @@
 import time
 import os
 
-# from memory_builder import make_byte_addressable
 from fetch import fetch
 from Decode import decode_instruction, REGISTER_NAMES
 from execute import execute_stage
@@ -31,7 +30,6 @@ def save_registers(registers, filename="Register.txt"):
 
 def run_mips_processor():
     print("Starting MIPS Processor Simulation...\n" + "="*50)
-    # Reset Register File
     with open("Register.txt", "w") as f:
         for _ in range(32):
             f.write("00000000000000000000000000000000\n")
@@ -39,7 +37,6 @@ def run_mips_processor():
     build_all_memories()
     
     pc_int = 0
-    # registers_state = load_registers("Register.txt") 
     registers_state = [0] * 32
     
     cycle_count = 1
@@ -55,12 +52,8 @@ def run_mips_processor():
             
         decoded_info = decode_instruction(int(instr_str, 2))
         
-        # ==========================================
-        # NEW: SYSCALL INTERCEPTOR
-        # ==========================================
-        # Check if Opcode is 0x00 and Funct is 0x0c (syscall)
         if decoded_info.get("opcode") == "0x0" and decoded_info.get("funct") == "0xc":
-            v0_val = registers_state[2] # $v0 is Register 2
+            v0_val = registers_state[2] 
             
             if v0_val == 10:
                 print(f"Syscall 10 (Exit) detected at PC {pc_int}. Processor Halting.")
@@ -69,8 +62,7 @@ def run_mips_processor():
                 print(f"Warning: Syscall {v0_val} not implemented. Ignoring.")
                 pc_int += 4
                 cycle_count += 1
-                continue # Skip the execution stage and go to the next instruction
-        # ==========================================
+                continue 
 
         rs_idx = decoded_info.get("rs", 0)
         rt_idx = decoded_info.get("rt", 0)
