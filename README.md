@@ -230,10 +230,12 @@ Upon encountering a halt loop or a syscall 10, the simulator will safely exit an
 
 Check Register.txt for final register values
 
-**At the end of every single clock cycle, the processor's active register state is instantly synced and saved to `Register.txt`    
-and, data is instantly synced and saved to `memory_data.txt` for accurate cycle-by-cycle debugging.**
+**At the end of every single clock cycle, the processor's active register state is instantly synced and saved to `Register.txt` and, 
+
+data is instantly synced and saved to `memory_data.txt` for accurate cycle-by-cycle debugging.**
 
 Check memory_data.txt for any variables or arrays written back to RAM via sw instructions.
+
 
 ## 🎓 Academic Context
 This simulator was developed as part of EGC 121: Computer Architecture, prepared for Prof. Karthikeyan Vaidyanathan at the International Institute of Information Technology, Bangalore (IIITB).

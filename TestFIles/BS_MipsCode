@@ -1,53 +1,35 @@
-# Assume array starts at memory address 0 in your simulator
-# Array = [2, 3, 4, 10, 40]
-# Target = 10
+add  $s0, $zero, $zero
+add  $s1, $zero, $zero
+addi $s2, $zero, 4
+addi $s3, $zero, 10
+addi $s7, $zero, -1
 
-# --- INITIALIZATION ---
-add  $s0, $zero, $zero    # $s0 = 0 (Base address of array in memory)
-add  $s1, $zero, $zero    # $s1 = 0 (low = 0)
-addi $s2, $zero, 4        # $s2 = 4 (high = 4, since size is 5)
-addi $s3, $zero, 10       # $s3 = 10 (Target value we are searching for)
-addi $s7, $zero, -1       # $s7 = -1 (Default result index if not found)
-
-# --- MAIN LOOP ---
 loop:
-    # 1. Check while (low <= high) -> break if (high < low)
-    slt  $t0, $s2, $s1        # $t0 = 1 IF high < low
-    bne  $t0, $zero, end_prog # IF high < low, exit the loop
-
-    # 2. Calculate mid = (low + high) / 2
-    add  $s4, $s1, $s2        # $s4 = low + high
-    srl  $s4, $s4, 1          # $s4 = mid (Shift Right Logical divides by 2)
-
-    # 3. Load arr[mid] from memory
-    sll  $t1, $s4, 2          # $t1 = mid * 4 (Offset in bytes)
-    add  $s5, $s0, $t1        # $s5 = Base Address + Offset
-    lw   $s6, 0($s5)          # $s6 = arr[mid] (Load value from memory)
-
-    # 4. Check if arr[mid] == target
-    beq  $s6, $s3, found_it   # IF arr[mid] == target, jump to found_it
-
-    # 5. Check if arr[mid] < target
-    slt  $t0, $s6, $s3        # $t0 = 1 IF arr[mid] < target
-    beq  $t0, $zero, go_left  # IF NOT less than (so it's >), go left
+    slt  $t0, $s2, $s1
+    bne  $t0, $zero, end_prog
+    
+    add  $s4, $s1, $s2
+    srl  $s4, $s4, 1
+    
+    sll  $t1, $s4, 2
+    add  $s5, $s0, $t1
+    lw   $s6, 0($s5)
+    
+    beq  $s6, $s3, found_it
+    slt  $t0, $s6, $s3
+    beq  $t0, $zero, go_left
 
 go_right:
-    # low = mid + 1
-    addi $s1, $s4, 1          
-    beq  $zero, $zero, loop   # Unconditional Jump back to loop!
+    addi $s1, $s4, 1
+    beq  $zero, $zero, loop
 
 go_left:
-    # high = mid - 1
-    addi $s2, $s4, -1         
-    beq  $zero, $zero, loop   # Unconditional Jump back to loop!
+    addi $s2, $s4, -1
+    beq  $zero, $zero, loop
 
-# --- RESULT HANDLERS ---
 found_it:
-    # Save the found index to $s7
-    add  $s7, $zero, $s4      
-    beq  $zero, $zero, end_prog # Jump to end
+    add  $s7, $zero, $s4
+    beq  $zero, $zero, end_prog
 
 end_prog:
-    # Infinite loop to halt the simulator gracefully
-    # Result is sitting safely in register $s7
     beq  $zero, $zero, end_prog

@@ -1,91 +1,82 @@
 .data
-    # We will let memory_builder.py map this sequentially starting at byte 0.
-    N:      .word 5       # Address: 0
-    arr0:   .word 40      # Address: 4
-    arr1:   .word 10      # Address: 8
-    arr2:   .word 50      # Address: 12
-    arr3:   .word 20      # Address: 16
-    arr4:   .word 30      # Address: 20
-    median: .word 0       # Address: 24
-    avg:    .word 0       # Address: 28
+    N:      .word 5
+    arr0:   .word 40
+    arr1:   .word 10
+    arr2:   .word 50
+    arr3:   .word 20
+    arr4:   .word 30
+    median: .word 0
+    avg:    .word 0
 
 .text
 .globl main
 main:
-    # --- 1. INITIALIZATION ---
-    lw $s0, 0($0)       # $s0 = Load N (Length of array) from Address 0
-    addi $s1, $0, 4     # $s1 = Base Address of the Array elements (Address 4)
+    lw   $s0, 0($0)
+    addi $s1, $0, 4
 
-    # --- 2. DYNAMIC BUBBLE SORT (N elements) ---
-    add $t0, $0, $0     # i = 0
+    add  $t0, $0, $0
 outer_loop:
-    sub $t1, $s0, $t0   # $t1 = N - i
-    addi $t1, $t1, -1   # $t1 = N - i - 1
-    slt $t2, $0, $t1    # If 0 < (N - i - 1), $t2 = 1. Else 0.
-    beq $t2, $0, end_out
+    sub  $t1, $s0, $t0
+    addi $t1, $t1, -1
+    slt  $t2, $0, $t1
+    beq  $t2, $0, end_out
 
-    add $t3, $0, $0     # j = 0
-    add $t4, $s1, $0    # $t4 = Current address pointer
+    add  $t3, $0, $0
+    add  $t4, $s1, $0
 
 inner_loop:
-    slt $t2, $t3, $t1   # If j < (N - i - 1), $t2 = 1. Else 0.
-    beq $t2, $0, end_in 
+    slt  $t2, $t3, $t1
+    beq  $t2, $0, end_in 
 
-    lw $t5, 0($t4)      # Load Arr[j]
-    lw $t6, 4($t4)      # Load Arr[j+1]
-    slt $t7, $t6, $t5   # If Arr[j+1] < Arr[j], $t7 = 1 (Needs Swap)
-    beq $t7, $0, no_swp 
+    lw   $t5, 0($t4)
+    lw   $t6, 4($t4)
+    slt  $t7, $t6, $t5
+    beq  $t7, $0, no_swp 
 
-    sw $t6, 0($t4)      # Swap: Store Arr[j+1]
-    sw $t5, 4($t4)      # Swap: Store Arr[j]
+    sw   $t6, 0($t4)
+    sw   $t5, 4($t4)
 
 no_swp:
-    addi $t3, $t3, 1    # j++
-    addi $t4, $t4, 4    # Advance address pointer by 4 bytes
-    beq $0, $0, inner_loop  # FIXED: Use branch for relative offset
+    addi $t3, $t3, 1
+    addi $t4, $t4, 4
+    beq  $0, $0, inner_loop
 
 end_in:
-    addi $t0, $t0, 1    # i++
-    beq $0, $0, outer_loop  # FIXED: Use branch for relative offset
+    addi $t0, $t0, 1
+    beq  $0, $0, outer_loop
 
 end_out:
-    # --- 3. FIND & STORE MEDIAN ---
-    srl $t0, $s0, 1     # $t0 = N / 2 (Index of median)
-    sll $t0, $t0, 2     # $t0 = Index * 4 (Byte offset)
-    add $t0, $t0, $s1   # $t0 = Base Address + Byte Offset
-    lw $t1, 0($t0)      # $t1 = Load the Median value from array
+    srl  $t0, $s0, 1
+    sll  $t0, $t0, 2
+    add  $t0, $t0, $s1
+    lw   $t1, 0($t0)
     
-    # Store Median exactly at Address 24
-    sw $t1, 24($0)      
+    sw   $t1, 24($0)      
 
-    # --- 4. CALCULATE AVERAGE ---
-    add $t0, $0, $0     # i = 0
-    add $t1, $s1, $0    # $t1 = Base Address
-    add $t2, $0, $0     # sum = 0
+    add  $t0, $0, $0
+    add  $t1, $s1, $0
+    add  $t2, $0, $0
 
 sum_loop:
-    slt $t3, $t0, $s0   # If i < N, $t3 = 1
-    beq $t3, $0, end_sum
-    lw $t4, 0($t1)      # Load Arr[i]
-    add $t2, $t2, $t4   # sum += Arr[i]
-    addi $t0, $t0, 1    # i++
-    addi $t1, $t1, 4    # Advance pointer
-    beq $0, $0, sum_loop    # FIXED: Use branch for relative offset
+    slt  $t3, $t0, $s0
+    beq  $t3, $0, end_sum
+    lw   $t4, 0($t1)
+    add  $t2, $t2, $t4
+    addi $t0, $t0, 1
+    addi $t1, $t1, 4
+    beq  $0, $0, sum_loop
 
 end_sum:
-    add $t5, $0, $0     # Quotient / Average = 0
+    add  $t5, $0, $0
 div_loop:
-    slt $t3, $t2, $s0   # If sum < N, $t3 = 1
-    bne $t3, $0, end_div
-    sub $t2, $t2, $s0   # sum -= N
-    addi $t5, $t5, 1    # Quotient += 1
-    beq $0, $0, div_loop    # FIXED: Use branch for relative offset
+    slt  $t3, $t2, $s0
+    bne  $t3, $0, end_div
+    sub  $t2, $t2, $s0
+    addi $t5, $t5, 1
+    beq  $0, $0, div_loop
 
 end_div:
-    # --- 5. STORE AVERAGE & HALT ---
-    # Store Average exactly at Address 28
-    sw $t5, 28($0)      
+    sw   $t5, 28($0)      
     
-    # Halt Simulator
-    addi $v0, $0, 10    # Load 10 into $v0
-    syscall             # Execute exit
+    addi $v0, $0, 10
+    syscall
