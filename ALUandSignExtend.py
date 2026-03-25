@@ -3,6 +3,11 @@ def sign_extend_16_to_32(binary_str):
         return None
     return binary_str[0] * 16 + binary_str
 
+# 000 -> AND
+# 001 -> OR
+# 010 -> ADD
+# 011 -> SUB
+# 100 -> Less Than
 
 def ALU(operand1_bin, operand2_bin, control_line):
     try:
