@@ -1,5 +1,5 @@
 def fetch(pc_binary, memory_file="memory_code.txt"):
-    if not isinstance(pc_binary, str) or len(pc_binary) != 32:
+    if not (type(pc_binary)==str) or len(pc_binary) != 32:
         return None
     try:
         pc_int = int(pc_binary, 2)
