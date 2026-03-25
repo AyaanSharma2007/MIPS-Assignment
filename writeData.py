@@ -1,5 +1,8 @@
 def write_data_memory(address, write_data, file_name="memory_data.txt"):
-    byte_address = int(address, 2)
+    try:
+        byte_address = int(address, 2)
+    except ValueError:
+        return None
 
     with open(file_name, 'r') as f:
         lines = [line.strip() for line in f.readlines()]

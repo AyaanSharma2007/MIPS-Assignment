@@ -1,5 +1,8 @@
 def access_data_memory(address_32bit, file_name="memory_data.txt"):
-    byte_address = int(address_32bit, 2)
+    try:
+        byte_address = int(address_32bit, 2)
+    except ValueError:
+        return None
 
     with open(file_name, 'r') as file:
         memory_lines = [line.strip() for line in file.readlines()]
