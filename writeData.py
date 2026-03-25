@@ -1,4 +1,4 @@
-def write_data_memory(address, write_data, file_name="Data.txt"):
+def write_data_memory(address, write_data, file_name="memory_data.txt"):
     byte_address = int(address, 2)
 
     with open(file_name, 'r') as f:
