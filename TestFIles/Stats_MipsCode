@@ -35,8 +35,8 @@ inner_loop:
     slt  $t7, $t6, $t5    # Is next < current?
     beq  $t7, $0, no_swp  # If not, skip the swap
 
-    sw   $t6, 0($t4)      # SWAP: Store smaller first
-    sw   $t5, 4($t4)      # SWAP: Store larger second
+    sw   $t6, 0($t4)      # SWAP- Store smaller first
+    sw   $t5, 4($t4)      # SWAP- Store larger second
 
 no_swp:
     addi $t3, $t3, 1      # j++
