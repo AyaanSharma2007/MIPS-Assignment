@@ -33,7 +33,7 @@ def run_mips_processor():
     with open("Register.txt", "w") as f:
         for _ in range(32):
             f.write("00000000000000000000000000000000\n")
-    from memory_builder import build_all_memories
+    from memory_builder import build_all_memories #conv to byte adddr
     build_all_memories()
     
     pc_int = 0
@@ -42,17 +42,17 @@ def run_mips_processor():
     cycle_count = 1
 
     while True:
-        pc_str = f"{pc_int:032b}"
+        pc_str = f"{pc_int:032b}" #convert pc to 32 bit binary
         print(f"\n[Cycle {cycle_count}] PC: {pc_int}")
         
-        instr_str = fetch(pc_str, "memory_code.txt")
+        instr_str = fetch(pc_str, "memory_code.txt")#fetch kiya
         if not instr_str:
             print("End of Instructions (or Invalid PC). Processor Halting.")
             break
             
-        decoded_info = decode_instruction(int(instr_str, 2))
+        decoded_info = decode_instruction(int(instr_str, 2))#decode kara
         
-        if decoded_info.get("opcode") == "0x0" and decoded_info.get("funct") == "0xc":
+        if decoded_info.get("opcode") == "0x0" and decoded_info.get("funct") == "0xc": #checking syscall
             v0_val = registers_state[2] 
             
             if v0_val == 10:
