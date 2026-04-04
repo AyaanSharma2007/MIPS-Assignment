@@ -1,82 +1,88 @@
 .data
-    N:      .word 5
-    arr0:   .word 40
+    N:      .word 5       # Array length
+    arr0:   .word 40      # Array elements start here
     arr1:   .word 10
     arr2:   .word 50
     arr3:   .word 20
     arr4:   .word 30
-    median: .word 0
-    avg:    .word 0
+    median: .word 0       # Destination for median
+    avg:    .word 0       # Destination for average
 
 .text
 .globl main
 main:
-    lw   $s0, 0($0)
-    addi $s1, $0, 4
+    # --- 1. SETUP ---
+    lw   $s0, 0($0)       # $s0 = N (5)
+    addi $s1, $0, 4       # $s1 = Array base address
 
-    add  $t0, $0, $0
+    # --- 2. BUBBLE SORT ---
+    add  $t0, $0, $0      # i = 0
 outer_loop:
-    sub  $t1, $s0, $t0
-    addi $t1, $t1, -1
+    sub  $t1, $s0, $t0    # $t1 = N - i
+    addi $t1, $t1, -1     # $t1 = limit for inner loop
     slt  $t2, $0, $t1
-    beq  $t2, $0, end_out
+    beq  $t2, $0, end_out # If done sorting, exit to 'end_out'
 
-    add  $t3, $0, $0
-    add  $t4, $s1, $0
+    add  $t3, $0, $0      # j = 0
+    add  $t4, $s1, $0     # $t4 = active array pointer
 
 inner_loop:
     slt  $t2, $t3, $t1
-    beq  $t2, $0, end_in 
+    beq  $t2, $0, end_in  # If j reaches limit, go to next pass
 
-    lw   $t5, 0($t4)
-    lw   $t6, 4($t4)
-    slt  $t7, $t6, $t5
-    beq  $t7, $0, no_swp 
+    lw   $t5, 0($t4)      # Load current number
+    lw   $t6, 4($t4)      # Load next number
+    slt  $t7, $t6, $t5    # Is next < current?
+    beq  $t7, $0, no_swp  # If not, skip the swap
 
-    sw   $t6, 0($t4)
-    sw   $t5, 4($t4)
+    sw   $t6, 0($t4)      # SWAP: Store smaller first
+    sw   $t5, 4($t4)      # SWAP: Store larger second
 
 no_swp:
-    addi $t3, $t3, 1
-    addi $t4, $t4, 4
+    addi $t3, $t3, 1      # j++
+    addi $t4, $t4, 4      # Move pointer to next element
     beq  $0, $0, inner_loop
 
 end_in:
-    addi $t0, $t0, 1
+    addi $t0, $t0, 1      # i++
     beq  $0, $0, outer_loop
 
+    # --- 3. FIND MEDIAN ---
 end_out:
-    srl  $t0, $s0, 1
-    sll  $t0, $t0, 2
-    add  $t0, $t0, $s1
-    lw   $t1, 0($t0)
+    srl  $t0, $s0, 1      # index = N / 2 (Find middle position)
+    sll  $t0, $t0, 2      # convert index to byte offset (* 4)
+    add  $t0, $t0, $s1    # add offset to base address
+    lw   $t1, 0($t0)      # load the median number
     
-    sw   $t1, 24($0)      
+    sw   $t1, 24($0)      # save median to memory
 
-    add  $t0, $0, $0
-    add  $t1, $s1, $0
-    add  $t2, $0, $0
+    # --- 4. CALCULATE AVERAGE (SUM) ---
+    add  $t0, $0, $0      # i = 0
+    add  $t1, $s1, $0     # reset array pointer
+    add  $t2, $0, $0      # sum = 0
 
 sum_loop:
     slt  $t3, $t0, $s0
-    beq  $t3, $0, end_sum
-    lw   $t4, 0($t1)
-    add  $t2, $t2, $t4
-    addi $t0, $t0, 1
-    addi $t1, $t1, 4
+    beq  $t3, $0, end_sum # if i == N, stop adding
+    lw   $t4, 0($t1)      # load array element
+    add  $t2, $t2, $t4    # sum = sum + element
+    addi $t0, $t0, 1      # i++
+    addi $t1, $t1, 4      # advance pointer
     beq  $0, $0, sum_loop
 
+    # --- 5. CALCULATE AVERAGE (DIVIDE) ---
 end_sum:
-    add  $t5, $0, $0
+    add  $t5, $0, $0      # average (quotient) = 0
 div_loop:
-    slt  $t3, $t2, $s0
-    bne  $t3, $0, end_div
-    sub  $t2, $t2, $s0
-    addi $t5, $t5, 1
+    slt  $t3, $t2, $s0    # Is sum < N?
+    bne  $t3, $0, end_div # If yes, division is done!
+    sub  $t2, $t2, $s0    # sum = sum - N
+    addi $t5, $t5, 1      # average++
     beq  $0, $0, div_loop
 
+    # --- 6. SAVE & EXIT ---
 end_div:
-    sw   $t5, 28($0)      
+    sw   $t5, 28($0)      # save average to memory
     
-    addi $v0, $0, 10
+    addi $v0, $0, 10      # Exit syscall code
     syscall
