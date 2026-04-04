@@ -1,19 +1,19 @@
-add  $s0, $zero, $zero
-add  $s1, $zero, $zero
-addi $s2, $zero, 4
-addi $s3, $zero, 10
-addi $s7, $zero, -1
+add  $s0, $zero, $zero   # base address of array = 0
+add  $s1, $zero, $zero   # left = 0
+addi $s2, $zero, 4       # right = 4
+addi $s3, $zero, 10      # target = 10
+addi $s7, $zero, -1      # result = -1 (not found)
 
 loop:
     slt  $t0, $s2, $s1
-    bne  $t0, $zero, end_prog
+    bne  $t0, $zero, end_prog #terminating condition
     
-    add  $s4, $s1, $s2
+    add  $s4, $s1, $s2 #calculating middle index in #s4
     srl  $s4, $s4, 1
     
-    sll  $t1, $s4, 2
+    sll  $t1, $s4, 2 
     add  $s5, $s0, $t1
-    lw   $s6, 0($s5)
+    lw   $s6, 0($s5) #get array[mid] at $s6
     
     beq  $s6, $s3, found_it
     slt  $t0, $s6, $s3
